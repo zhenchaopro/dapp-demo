@@ -5,7 +5,7 @@ import Transfer from 'libs/transfer'
 
 const Index: React.FC<unknown> = () => {
   return (
-    <div>
+    <div className=''>
       <Connector />
       <Transfer />
       <style jsx>{`

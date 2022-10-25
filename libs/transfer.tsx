@@ -86,7 +86,7 @@ const Transfer = () => {
 
   if (!isConnected) {
     return (
-      <div className='w-96 mx-auto rounded-lg border shadow-lg p-4'>
+      <div className='w-80 md:w-96 mx-auto rounded-lg border shadow-lg p-4 box-border m-4 bg-white'>
         <div className='font-bold'>此 DApp 支持发送交易的时候指定 nonce。</div>
         <Spacer />
         <div>目前支持 ImToken 和 MetaMask</div>
@@ -313,7 +313,7 @@ const Transfer = () => {
   }
 
   return (
-    <div className='transfer-container w-96 mx-auto border rounded-lg p-4 shadow-lg'>
+    <div className='transfer-container md:w-96 mx-4 md:mx-auto border rounded-lg p-4 shadow-lg box-border bg-white'>
       <Text h2>Send</Text>
       <form onSubmit={handleSubmit(sendTransaction)}>
         <div className='form-item'>
@@ -401,20 +401,24 @@ const Transfer = () => {
           )}
         </div>
       </form>
-      <Spacer />
-      <div>
-        <div className='flex items-center'>
-          <div className='font-bold text-xl mr-2'>
-            Pending transactions
+      {pendingTxs.length > 0 && (
+        <>
+          <Spacer />
+          <div>
+            <div className='flex items-center'>
+              <div className='font-bold text-xl mr-2'>
+                Pending transactions
+              </div>
+              <Badge scale={0.8} type='warning'>
+                {pendingTxs.length}
+              </Badge>
+            </div>
+            {pendingTxs.map(t => (
+              <TransactionSummary key={t.hash} tx={t} />
+            ))}
           </div>
-          <Badge scale={0.8} type='warning'>
-            {pendingTxs.length}
-          </Badge>
-        </div>
-        {pendingTxs.map(t => (
-          <TransactionSummary key={t.hash} tx={t} />
-        ))}
-      </div>
+        </>
+      )}
       <Toaster />
       <Modal {...bindings}>
         <Modal.Content>

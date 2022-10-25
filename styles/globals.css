@@ -1,8 +1,13 @@
  @tailwind base;
+ @tailwind components;
  @tailwind utilities;
 
+ html {
+ }
+
  body {
-  background-color:aliceblue;
+  height: 100vh;
+  background-image: linear-gradient(269.7deg,#bfdbfe 11.64%,#dbeafe 57.13%,#7dd3fc 99.87%);
  }
 
 .form-item {
