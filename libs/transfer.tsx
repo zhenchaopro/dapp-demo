@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { Web3Provider } from '@ethersproject/providers'
 import { BigNumber, ethers } from 'ethers'
 import toast, { Toaster } from 'react-hot-toast'
-import { Grid, Card, Text, Spacer, Badge } from "@geist-ui/react"
-import { Controller, useForm, SubmitHandler } from 'react-hook-form'
-import { formatEther } from "ethers/lib/utils";
-import TransactionSummary from "./transation-summary";
-import { BUILTIN_NETWORKS, PendingTransaction } from "../constants"
-import { formatEthAddress } from "../utils"
+import { Text, Spacer, Badge } from '@geist-ui/react'
+import { useForm, SubmitHandler } from 'react-hook-form'
+import { formatEther } from 'ethers/lib/utils'
+import TransactionSummary from './transation-summary'
+import { BUILTIN_NETWORKS, PendingTransaction } from '../constants'
+import { formatEthAddress } from '../utils'
 
-const BadgeAnchor = Badge.Anchor;
+const BadgeAnchor = Badge.Anchor
 
 export type TransferPayload = {
   network: string
@@ -20,22 +20,20 @@ export type TransferPayload = {
   nonce: string
 }
 
-
 export interface FeeData {
-  maxFeePerGas: BigNumber;
-  maxPriorityFeePerGas: BigNumber;
-  gasPrice: BigNumber;
+  maxFeePerGas: BigNumber
+  maxPriorityFeePerGas: BigNumber
+  gasPrice: BigNumber
 }
 
-interface TransferProps {
-}
+interface TransferProps {}
 
 type SwitchNetworkResult = {
   chainId: number
 }
 
-const DEFAULT_GAS_LIMIT = 21000;
-const BIGNUMBER_ZERO = BigNumber.from('0');
+const DEFAULT_GAS_LIMIT = 21000
+const BIGNUMBER_ZERO = BigNumber.from('0')
 const ADDRESS_FORMAT_ERROR_MSG =
   "The recipient's address format is wrong. Please check the address length and character content and try again"
 
@@ -70,19 +68,16 @@ const Transfer = () => {
   }, [active, account])
 
   useEffect(() => {
-    reset((formValues) => ({
+    reset(formValues => ({
       ...formValues,
       nonce: nonce.toString(),
     }))
   }, [nonce])
 
-
   const subscribeTranscationMinedEvent = (txhash: string, amount: string) => {
-    library?.once(txhash, (t) => {
-      toast.success(
-        `Transaction ${formatEthAddress(txhash)} has been mined`
-      )
-      setBalance((b) => b.sub(ethers.utils.parseEther(amount)))
+    library?.once(txhash, t => {
+      toast.success(`Transaction ${formatEthAddress(txhash)} has been mined`)
+      setBalance(b => b.sub(ethers.utils.parseEther(amount)))
 
       // 使用 nonce++ 会有问题, 需要重新获取
       // 1. 如果多个客户端同时发送交易，会有问题
@@ -91,8 +86,8 @@ const Transfer = () => {
       signer.getTransactionCount().then(count => setNonce(_ => count))
 
       // remove mined transaction from pending transactions
-      setPendingTxs((txs) => {
-        const index = txs.findIndex((t) => t.hash === txhash)
+      setPendingTxs(txs => {
+        const index = txs.findIndex(t => t.hash === txhash)
         if (index !== -1) {
           return [...txs.slice(0, index), ...txs.slice(index + 1)]
         }
@@ -101,14 +96,14 @@ const Transfer = () => {
     })
   }
 
-  const sendTransaction: SubmitHandler<TransferPayload> = async (payload) => {
+  const sendTransaction: SubmitHandler<TransferPayload> = async payload => {
     setIsSending(true)
     const signer = library.getSigner()
-    let feeData: FeeData;
+    let feeData: FeeData
     try {
       feeData = await library.getFeeData()
     } catch (error) {
-      toast.error("获取手续费错误，请重试！")
+      toast.error('获取手续费错误，请重试！')
       return
     }
 
@@ -134,13 +129,13 @@ const Transfer = () => {
           params: [tx],
         })
         .then((txhash: string) => {
-          reset((formValues) => ({
+          reset(formValues => ({
             ...formValues,
             to: '',
-            amount: ''
+            amount: '',
           }))
           setIsSending(false)
-          console.log("request send tran: ", txhash)
+          console.log('request send tran: ', txhash)
           library.getTransaction(txhash).then((t: TransactionResponse | null) => {
             // 对于手动设置到额 nonce 的交易，被加入 queued 队列, 这里的 t 可能为空
             // 根据发送的 payload 手动构造一个 pending transaction
@@ -155,9 +150,9 @@ const Transfer = () => {
                 gasLimit: ethers.BigNumber.from(DEFAULT_GAS_LIMIT),
                 hash: txhash,
               }
-              setPendingTxs((txs) => [imtokenTxPayload, ...txs])
+              setPendingTxs(txs => [imtokenTxPayload, ...txs])
             } else {
-              setPendingTxs((txs) => [t, ...txs])
+              setPendingTxs(txs => [t, ...txs])
             }
           })
           subscribeTranscationMinedEvent(txhash, payload.amount)
@@ -175,13 +170,14 @@ const Transfer = () => {
         nonce: parseInt(payload.nonce),
         type: 2, // set to EIP-1559 explicitly
       }
-      return signer.sendTransaction(tx)
+      return signer
+        .sendTransaction(tx)
         .then((t: TransactionResponse) => {
-          setPendingTxs((txs) => [t, ...txs])
-          reset((formValues) => ({
+          setPendingTxs(txs => [t, ...txs])
+          reset(formValues => ({
             ...formValues,
             to: '',
-            amount: ''
+            amount: '',
           }))
           setIsSending(false)
           subscribeTranscationMinedEvent(t.hash, payload.amount)
@@ -189,13 +185,23 @@ const Transfer = () => {
         })
         .catch((error: Error) => {
           setIsSending(false)
+          console.log(error)
+          if (
+            (typeof error.message === 'string' &&
+              error.message.match(/user (rejected|denied)/i)) ||
+            (typeof error === 'string' && error.match(/user (rejected|denied)/i))
+          ) {
+            toast.error('User rejected transaction!')
+          } else {
+            toast.error('Send failed!')
+          }
           throw error
         })
     }
   }
 
   const switchNetwork = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const chainId = e.target.value;
+    const chainId = e.target.value
     return (window as any).ethereum
       .request({
         method: 'wallet_switchEthereumChain',
@@ -209,17 +215,12 @@ const Transfer = () => {
         toast.success('Switch network successfully')
       })
       .catch((error: any) => {
-        if (
-          typeof error.message === 'string' &&
-          error.message.match(/Unrecognized chain/i)
-        ) {
+        if (typeof error.message === 'string' && error.message.match(/Unrecognized chain/i)) {
           toast.error(
-            (t) => (
+            t => (
               <span>
                 Unrecognized network. Try adding the network first.
-                <button
-                  className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
-                >
+                <button className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'>
                   Add network
                 </button>
               </span>
@@ -228,25 +229,24 @@ const Transfer = () => {
               style: {
                 minWidth: 580,
               },
-            }
+            },
           )
-
         }
       })
   }
 
-  const requestAddNetwork = (chainId: string) => {
-  }
+  const requestAddNetwork = (chainId: string) => {}
 
   return (
-    <div className="transfer-container font-bold text-2xl bg-red-300">
+    <div className='transfer-container w-96 mx-auto border rounded-lg p-4 shadow-lg'>
+    <Text h2>Send</Text>
       <form onSubmit={handleSubmit(sendTransaction)}>
         <div className='form-item'>
           <div className='form-item__label'>
             <label htmlFor='network'>Network</label>
             <div
               className='font-normal text-sm cursor-pointer hover:text-blue-600'
-              onClick={() => toast("here we are")}
+              onClick={() => toast('here we are')}
             >
               Add network
             </div>
@@ -255,11 +255,11 @@ const Transfer = () => {
             id='network'
             placeholder='Select network'
             {...register('network', {
-              required: 'Network is required',
+              required: 'Network is required', 
               onChange: switchNetwork,
             })}
           >
-            {BUILTIN_NETWORKS.map((network) => (
+            {BUILTIN_NETWORKS.map(network => (
               <option key={network.chainId} value={network.chainId.toString()}>
                 {network.chainName}
               </option>
@@ -277,14 +277,11 @@ const Transfer = () => {
             {...register('to', {
               required: "Please enter recipient's address",
               validate: {
-                isEthAddress: (value) =>
-                  ethers.utils.isAddress(value) || ADDRESS_FORMAT_ERROR_MSG,
+                isEthAddress: value => ethers.utils.isAddress(value) || ADDRESS_FORMAT_ERROR_MSG,
               },
             })}
           />
-          {errors.to && (
-            <div className='form-item__error'>{errors.to.message}</div>
-          )}
+          {errors.to && <div className='form-item__error'>{errors.to.message}</div>}
         </div>
         <div className='form-item'>
           <div className='form-item__label'>
@@ -297,9 +294,7 @@ const Transfer = () => {
             placeholder='amount'
             {...register('amount', { required: 'Amount is required' })}
           />
-          {errors.amount && (
-            <div className='form-item__error'>{errors.amount.message}</div>
-          )}
+          {errors.amount && <div className='form-item__error'>{errors.amount.message}</div>}
         </div>
         <div className='form-item'>
           <div className='form-item__label'>
@@ -310,14 +305,12 @@ const Transfer = () => {
             type='number'
             {...register('nonce', { required: 'Nonce is required' })}
           />
-          {errors.nonce && (
-            <div className='form-item__error'>{errors.nonce.message}</div>
-          )}
+          {errors.nonce && <div className='form-item__error'>{errors.nonce.message}</div>}
         </div>
         <div className='form-item'>
           {isSending ? (
             <button
-              className='w-full block border rounded-lg bg-blue-600 text-white p-2 cursor-not-allowed'
+              className='block border rounded-lg bg-blue-600 text-white w-full py-2 cursor-not-allowed'
               type='submit'
               disabled
             >
@@ -325,27 +318,31 @@ const Transfer = () => {
             </button>
           ) : (
             <button
-              className='w-full block border rounded-lg bg-blue-600 text-white p-2'
+              className='block border rounded-lg bg-blue-600 text-white w-full py-2'
               type='submit'
             >
-              Send
+              Confirm
             </button>
           )}
         </div>
       </form>
       <Spacer />
-      <Card shadow>
+      <div>
         <BadgeAnchor>
-          <Badge scale={0.5} type="warning">{pendingTxs.length}</Badge>
-          <Text b scale={1.5}>Pending transactions</Text>
+          <Badge scale={0.5} type='warning'>
+            {pendingTxs.length}
+          </Badge>
+          <Text b scale={1.5}>
+            Pending transactions
+          </Text>
         </BadgeAnchor>
         {pendingTxs.map(t => (
           <TransactionSummary key={t.hash} tx={t} />
         ))}
-      </Card>
+      </div>
       <Toaster />
     </div>
   )
 }
 
-export default Transfer;
+export default Transfer

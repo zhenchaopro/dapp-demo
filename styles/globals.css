@@ -1,0 +1,23 @@
+ @tailwind base;
+ @tailwind utilities;
+
+ body {
+  background-color:aliceblue;
+ }
+
+.form-item {
+  @apply my-4;
+}
+
+.form-item__label {
+  @apply font-bold py-1 flex justify-between items-center;
+}
+
+.form-item > input,
+select {
+  @apply border rounded w-full p-2 box-border;
+}
+
+.form-item > .form-item__error {
+  @apply text-red-600;
+}
