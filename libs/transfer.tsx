@@ -7,9 +7,10 @@ import toast, { Toaster } from 'react-hot-toast'
 import { Text, Spacer, Badge, useModal, Modal } from '@geist-ui/react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import TransactionSummary from './transation-summary'
-import { BUILTIN_NETWORKS, PendingTransaction } from '../constants'
+import { BUILTIN_NETWORKS, Network, PendingTransaction } from '../constants'
 import { formatEthAddress } from '../utils'
 import NewNetworkForm, { NewNetworkPayload, payloadToChainInfo } from './new-network-form'
+import { useLocalStorageState } from '../hooks'
 
 export type TransferPayload = {
   network: string
@@ -42,7 +43,8 @@ const Transfer = () => {
   const [nonce, setNonce] = useState<number>(0)
   const [isSending, setIsSending] = useState<boolean>(false)
   const [pendingTxs, setPendingTxs] = useState<PendingTransaction[]>([])
-  const { visible, setVisible, bindings } = useModal()
+  const { setVisible, bindings } = useModal()
+  const [networks, setNetworks] = useLocalStorageState<Network[]>('networks', BUILTIN_NETWORKS)
 
   const {
     register,
@@ -204,7 +206,7 @@ const Transfer = () => {
           subscribeTranscationMinedEvent(t.hash, payload.amount)
           return tx
         })
-        .catch((error: Error) => {
+        .catch((error) => {
           setIsSending(false)
           console.log(error)
           if (
@@ -254,8 +256,12 @@ const Transfer = () => {
         params: [chainInfo],
       })
       .then((ret: any) => {
-        setVisible(false)
         toast.success(`Add network ${payload.name} successfully`)
+        setVisible(false)
+        setNetworks(prevNetworks => [...prevNetworks, {
+          ...chainInfo,
+          chainId: payload.chainId
+        }])
         return ret
       })
       .catch((error: any) => {
@@ -328,7 +334,7 @@ const Transfer = () => {
               onChange: switchNetwork,
             })}
           >
-            {BUILTIN_NETWORKS.map(network => (
+            {networks.map(network => (
               <option key={network.chainId} value={network.chainId.toString()}>
                 {network.chainName}
               </option>

@@ -72,26 +72,16 @@ export const BUILTIN_NETWORKS = [
     rpcUrls: ['https://goerli.infura.io/v3/c4075c0c4d044d7ab858b17f97c6b209'],
     blockExplorerUrls: ['https://goerli.etherscan.io'],
   },
-  {
-    chainId: 57,
-    chainName: 'BSCCOPY',
-    nativeCurrency: {
-      symbol: 'BNB',
-      decimals: 8,
-    },
-    rpcUrls: ['https://goerli.infura.io/v3/c4075c0c4d044d7ab858b17f97c6b209'],
-    blockExplorerUrls: ['https://goerli.etherscan.io'],
-  },
-  {
-    chainId: 10,
-    chainName: 'Optimism',
-    nativeCurrency: {
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    rpcUrls: ['https://mainnet.optimism.io/'],
-    blockExplorerUrls: ['https://optimistic.etherscan.io'],
-  },
+  // {
+  //   chainId: 10,
+  //   chainName: 'Optimism',
+  //   nativeCurrency: {
+  //     symbol: 'ETH',
+  //     decimals: 18,
+  //   },
+  //   rpcUrls: ['https://mainnet.optimism.io/'],
+  //   blockExplorerUrls: ['https://optimistic.etherscan.io'],
+  // },
   {
     chainId: 10899999,
     chainName: 'NonExist Network',

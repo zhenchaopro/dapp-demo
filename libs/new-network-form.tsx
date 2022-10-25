@@ -21,7 +21,6 @@ const CURRENCY_SYMBOL_MESSAGE =
   'Currency symbol should be a string of 2 to 6 chars'
 
 export const payloadToChainInfo = (payload: NewNetworkPayload): ChainInfo => {
-  console.log(typeof payload.currencyDecimals)
   return {
     chainId: numberToChainID(payload.chainId),
     chainName: payload.name,
@@ -38,8 +37,6 @@ export default function AddNetwork(props: NewNetworkProps) {
   const {
     register,
     handleSubmit,
-    reset,
-    control,
     formState: { errors },
   } = useForm<NewNetworkPayload>({
     mode: 'all',
@@ -47,12 +44,9 @@ export default function AddNetwork(props: NewNetworkProps) {
 
   const saveNetwork: SubmitHandler<NewNetworkPayload> = (payload) => {
     return props.onSubmit(payload).then((_) => {
-      console.log('add succcess??')
       props.onCancel()
     })
   }
-
-  console.log(errors)
 
   return (
     <div className='add-network-container text-sm'>
