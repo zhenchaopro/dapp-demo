@@ -102,12 +102,12 @@ const Transfer = () => {
         <div className='font-bold text-lg'>此 DApp 支持发送交易的时候指定 nonce。</div>
         <Spacer />
         <div>
-          目前测试支持的是 ImToken 手机端钱包, MetaMask 会自动忽略所有 DApp 指定的
+          目前测试支持的是 imToken 手机端钱包, MetaMask 会自动忽略所有 DApp 指定的
           nonce，其他功能都OK。
         </div>
         <Spacer />
         <div>
-          在 ImToken 钱包内【浏览】标签中打开本站地址进行使用， 或者在安装了 MetaMask
+          在 imToken 钱包内【浏览】标签中打开本站地址进行使用， 或者在安装了 MetaMask
           插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。
         </div>
         <Spacer />
