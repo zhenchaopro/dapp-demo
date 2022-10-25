@@ -25,7 +25,7 @@ export interface FeeData {
   gasPrice: BigNumber
 }
 
-interface TransferProps { }
+interface TransferProps {}
 
 type SwitchNetworkResult = {
   chainId: number
@@ -207,9 +207,9 @@ const Transfer = () => {
     }
   }
 
-  const requestAddNetwork = (chainId: string) => { 
+  const requestAddNetwork = (chainId: string) => {
     return () => {
-      const chainInfo = BUILTIN_NETWORKS.find((n) => n.chainId.toString() === chainId)
+      const chainInfo = BUILTIN_NETWORKS.find(n => n.chainId.toString() === chainId)
       return (window as any).ethereum
         .request({
           method: 'wallet_addEthereumChain',
@@ -253,8 +253,9 @@ const Transfer = () => {
             t => (
               <span>
                 Unrecognized network. Try adding the network first.
-                <button className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
-                onClick={requestAddNetwork(chainId)}
+                <button
+                  className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
+                  onClick={requestAddNetwork(chainId)}
                 >
                   Add network
                 </button>
@@ -372,14 +373,14 @@ const Transfer = () => {
       </form>
       <Spacer />
       <div>
-        <BadgeAnchor>
-          <Badge scale={0.5} type='warning'>
+        <div className='flex items-center'>
+          <div className='font-bold text-xl mr-2'>
+            Pending transactions
+          </div>
+          <Badge scale={0.8} type='warning'>
             {pendingTxs.length}
           </Badge>
-          <Text b scale={1.5}>
-            Pending transactions
-          </Text>
-        </BadgeAnchor>
+        </div>
         {pendingTxs.map(t => (
           <TransactionSummary key={t.hash} tx={t} />
         ))}
