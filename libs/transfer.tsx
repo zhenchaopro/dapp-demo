@@ -25,7 +25,7 @@ export interface FeeData {
   gasPrice: BigNumber
 }
 
-interface TransferProps { }
+interface TransferProps {}
 
 type SwitchNetworkResult = {
   chainId: number
@@ -87,12 +87,21 @@ const Transfer = () => {
   if (!isConnected) {
     return (
       <div className='w-80 md:w-96 mx-auto rounded-lg border shadow-lg p-4 box-border m-4 bg-white'>
-        <div className='font-bold'>此 DApp 支持发送交易的时候指定 nonce。</div>
+        <div className='font-bold text-lg'>此 DApp 支持发送交易的时候指定 nonce。</div>
         <Spacer />
-        <div>目前支持 ImToken 和 MetaMask</div>
+        <div>
+          目前测试支持的是 ImToken 手机端钱包, MetaMask 会自动忽略所有 DApp 指定的
+          nonce，其他功能都OK。
+        </div>
         <Spacer />
-        <div>在 ImToken 钱包内【浏览】标签页中打开本站地址进行使用</div>
-        <div>或者在安装了 MetaMask 插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。</div>
+        <div>
+          在 ImToken 钱包内【浏览】标签中打开本站地址进行使用， 或者在安装了 MetaMask
+          插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。
+        </div>
+        <Spacer />
+        <div className='text-sm text-gray-700'>
+          Enkrypted 和 Coinbase Wallet Extension 测试不完全。
+        </div>
       </div>
     )
   }
@@ -158,7 +167,6 @@ const Transfer = () => {
             amount: '',
           }))
           setIsSending(false)
-          console.log('request send tran: ', txhash)
           library.getTransaction(txhash).then((t: TransactionResponse | null) => {
             // 对于手动设置到额 nonce 的交易，被加入 queued 队列, 这里的 t 可能为空
             // 根据发送的 payload 手动构造一个 pending transaction
@@ -167,7 +175,7 @@ const Transfer = () => {
                 from: account,
                 to: payload.to,
                 value: ethers.utils.parseEther(payload.amount),
-                nonce: ethers.BigNumber.from(payload.nonce).toHexString(),
+                nonce: ethers.BigNumber.from(payload.nonce).toNumber().toString(),
                 maxFeePerGas: feeData.maxFeePerGas,
                 maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
                 gasLimit: ethers.BigNumber.from(DEFAULT_GAS_LIMIT),
@@ -179,9 +187,12 @@ const Transfer = () => {
             }
           })
           subscribeTranscationMinedEvent(txhash, payload.amount)
+          toast.success("Transaction sent.")
         })
         .catch((error: any) => {
+          setIsSending(false)
           console.log(error)
+          toast.error("Failed to send transaction!")
           throw error
         })
     } else {
@@ -206,7 +217,7 @@ const Transfer = () => {
           subscribeTranscationMinedEvent(t.hash, payload.amount)
           return tx
         })
-        .catch((error) => {
+        .catch(error => {
           setIsSending(false)
           console.log(error)
           if (
@@ -248,7 +259,7 @@ const Transfer = () => {
     }
   }
 
-  const addNetworkManually: SubmitHandler<NewNetworkPayload> = (payload) => {
+  const addNetworkManually: SubmitHandler<NewNetworkPayload> = payload => {
     const chainInfo = payloadToChainInfo(payload)
     return (window as any).ethereum
       .request({
@@ -258,14 +269,17 @@ const Transfer = () => {
       .then((ret: any) => {
         toast.success(`Add network ${payload.name} successfully`)
         setVisible(false)
-        setNetworks(prevNetworks => [...prevNetworks, {
-          ...chainInfo,
-          chainId: payload.chainId
-        }])
+        setNetworks(prevNetworks => [
+          ...prevNetworks,
+          {
+            ...chainInfo,
+            chainId: payload.chainId,
+          },
+        ])
         return ret
       })
       .catch((error: any) => {
-        toast.error(error.message)
+        toast.error(error.message || "Faild to add network!")
         throw error
       })
   }
@@ -304,10 +318,10 @@ const Transfer = () => {
               },
             )
           } else if (error.message.match(/user (rejected|denied)/i)) {
-            toast.error("User rejected operation.")
+            toast.error('User rejected operation.')
           }
         } else {
-          toast.error("Switch network failed with unknown error")
+          toast.error('Switch network failed with unknown error')
         }
       })
   }
@@ -406,9 +420,7 @@ const Transfer = () => {
           <Spacer />
           <div>
             <div className='flex items-center'>
-              <div className='font-bold text-xl mr-2'>
-                Pending transactions
-              </div>
+              <div className='font-bold text-xl mr-2'>Pending transactions</div>
               <Badge scale={0.8} type='warning'>
                 {pendingTxs.length}
               </Badge>
