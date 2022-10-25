@@ -2,6 +2,7 @@ import React from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { isValidRpcURL, isValidURL, numberToChainID } from '../utils'
 import { CHAIN_ID_MAX, ChainInfo } from '../constants'
+import toast from 'react-hot-toast'
 
 export type NewNetworkPayload = {
   name: string
@@ -45,6 +46,8 @@ export default function AddNetwork(props: NewNetworkProps) {
   const saveNetwork: SubmitHandler<NewNetworkPayload> = (payload) => {
     return props.onSubmit(payload).then((_) => {
       props.onCancel()
+      // 切换网络之后刷新页面
+      window.location.reload()
     })
   }
 

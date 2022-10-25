@@ -1,5 +1,4 @@
-import * as React from 'react'
-import { Divider, Grid } from '@geist-ui/react'
+import React from 'react'
 import Connector from '../libs/connector'
 import Transfer from 'libs/transfer'
 

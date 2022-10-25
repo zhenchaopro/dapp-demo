@@ -4,16 +4,24 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { useWeb3React } from '@web3-react/core'
 import { Web3Provider } from '@ethersproject/providers'
 import toast, { Toaster } from 'react-hot-toast'
+import { useLocalStorageState } from '../hooks'
 
 const injected = new InjectedConnector({})
 
 const Connector: React.FC<unknown> = () => {
   const { activate, active, account, deactivate } = useWeb3React<Web3Provider>()
-  const [isConnected, setIsConncted] = useState<boolean>(false)
+  const [isConnected, setIsConncted] = useLocalStorageState<boolean>("isconnected", false)
 
   useEffect(() => {
-    setIsConncted(active && !!account)
-  }, [active, account])
+    injected.isAuthorized().then(authorized => {
+      setIsConncted(true);
+      activate(injected).then(_ => {
+        toast("Connected!")
+      }).catch((walletError) => {
+        toast.error(`Failed to connect: ${walletError.message}`)
+      })
+    })
+  }, [])
 
   const connectWallet = async () => {
     try {
@@ -24,7 +32,9 @@ const Connector: React.FC<unknown> = () => {
         }
         toast.error(`Failed to connect: ${walletError.message}`)
       })
+      setIsConncted(true);
     } catch (err) {
+      setIsConncted(true);
       console.log(err)
       toast.error('Failed to connect Wallet.')
     }
@@ -38,7 +48,7 @@ const Connector: React.FC<unknown> = () => {
   return (
     <div className='header flex items-center'>
       <Toaster />
-      {isConnected ? (
+      {isConnected && !!account ? (
         <div className='flex items-center'>
           <Snippet type='success' key={account} style={{ margin: '0 12px' }} symbol='♦' >
             <span>{account.slice(0, 4)}</span>

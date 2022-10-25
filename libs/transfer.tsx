@@ -38,26 +38,25 @@ const ADDRESS_FORMAT_ERROR_MSG =
 
 const Transfer = () => {
   const { active, account, library, chainId } = useWeb3React<Web3Provider>()
-  const isConnected = useMemo(() => active && !!account, [account, active])
   const [balance, setBalance] = useState<BigNumber>(BIGNUMBER_ZERO)
   const [nonce, setNonce] = useState<number>(0)
   const [isSending, setIsSending] = useState<boolean>(false)
   const [pendingTxs, setPendingTxs] = useState<PendingTransaction[]>([])
   const { setVisible, bindings } = useModal()
   const [networks, setNetworks] = useLocalStorageState<Network[]>('networks', BUILTIN_NETWORKS)
+  const [connected, setConnected] = useLocalStorageState<boolean>('connected', false)
 
   const {
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors },
   } = useForm<TransferPayload>({
     mode: 'all',
   })
 
   useEffect(() => {
-    if (active && account) {
+    if (active && !!account) {
       const signer = library.getSigner()
       signer.getBalance().then(value => {
         setBalance(value)
@@ -65,6 +64,7 @@ const Transfer = () => {
       signer.getTransactionCount().then(value => {
         setNonce(value)
       })
+      setConnected(true)
     }
   }, [active, account])
 
@@ -83,6 +83,7 @@ const Transfer = () => {
         to: "",
         amount: ""
       }))
+      setConnected(false);
     }
   }, [active])
 
@@ -95,7 +96,7 @@ const Transfer = () => {
     }
   }, [chainId])
 
-  if (!isConnected) {
+  if (!connected) {
     return (
       <div className='w-80 md:w-96 mx-auto rounded-lg border shadow-lg p-4 box-border m-4 bg-white'>
         <div className='font-bold text-lg'>此 DApp 支持发送交易的时候指定 nonce。</div>
@@ -206,7 +207,6 @@ const Transfer = () => {
           setIsSending(false)
           console.log(error)
           toast.error('Failed to send transaction!')
-          throw error
         })
     } else {
       // MetaMask 支持 signer.sendTransaction，但是 nonce 的值被忽略
@@ -233,22 +233,26 @@ const Transfer = () => {
         .catch(error => {
           setIsSending(false)
           console.log(error)
+          // TODO: 把错误处理单独抽象
           if (
             (typeof error.message === 'string' && error.message.match(/user (rejected|denied)/i)) ||
             (typeof error === 'string' && error.match(/user (rejected|denied)/i))
           ) {
             toast.error('User rejected transaction!')
+          } else if (typeof error === "string") {
+            toast.error(error.split("(")[0])
+          } else if (error.toString() !== "Error") {
+            toast.error(error.toString().split("(")[0])
           } else {
-            toast.error('Send failed!')
+            toast.error("Send failed")
           }
-          throw error
         })
     }
   }
 
   const requestAddNetwork = (chainId: string) => {
     return () => {
-      const chainInfo = BUILTIN_NETWORKS.find(n => n.chainId.toString() === chainId)
+      const chainInfo = networks.find(n => n.chainId.toString() === chainId)
       return (window as any).ethereum
         .request({
           method: 'wallet_addEthereumChain',
@@ -261,6 +265,7 @@ const Transfer = () => {
         })
         .then((ret: any) => {
           toast.success(`Add network ${chainInfo?.chainName} successfully`)
+          window.location.reload()
         })
         .catch((error: any) => {
           toast.error(error.message, {
@@ -286,14 +291,13 @@ const Transfer = () => {
           ...prevNetworks,
           {
             ...chainInfo,
-            chainId: payload.chainId,
+            chainId: parseInt(payload.chainId),
           },
         ])
         return ret
       })
       .catch((error: any) => {
         toast.error(error.message || 'Faild to add network!')
-        throw error
       })
   }
 
@@ -310,6 +314,8 @@ const Transfer = () => {
       })
       .then((ret: SwitchNetworkResult) => {
         toast.success('Switch network successfully')
+        // 切换网络之后刷新页面
+        window.location.reload()
       })
       .catch((error: any) => {
         if (typeof error.message === 'string') {
@@ -341,7 +347,7 @@ const Transfer = () => {
 
   return (
     <div className='transfer-container md:w-96 mx-4 md:mx-auto border rounded-lg p-4 shadow-lg box-border bg-white'>
-      <Text h2>Send</Text>
+      <div className='font-bold text-3xl'>Send</div>
       <form onSubmit={handleSubmit(sendTransaction)}>
         <div className='form-item'>
           <div className='form-item__label'>
