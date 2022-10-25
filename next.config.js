@@ -1,4 +1,5 @@
 const nextConfig = {
+  basePath: '/dapp-demo',
   target: 'serverless',
 
   pageExtensions: ['jsx', 'js', 'ts', 'tsx'],
