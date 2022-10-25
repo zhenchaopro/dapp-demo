@@ -4,13 +4,12 @@ import { TransactionResponse } from '@ethersproject/abstract-provider'
 import { Web3Provider } from '@ethersproject/providers'
 import { BigNumber, ethers } from 'ethers'
 import toast, { Toaster } from 'react-hot-toast'
-import { Text, Spacer, Badge } from '@geist-ui/react'
+import { Text, Spacer, Badge, useModal, Modal } from '@geist-ui/react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import TransactionSummary from './transation-summary'
 import { BUILTIN_NETWORKS, PendingTransaction } from '../constants'
 import { formatEthAddress } from '../utils'
-
-const BadgeAnchor = Badge.Anchor
+import NewNetworkForm, { NewNetworkPayload, payloadToChainInfo } from './new-network-form'
 
 export type TransferPayload = {
   network: string
@@ -25,7 +24,7 @@ export interface FeeData {
   gasPrice: BigNumber
 }
 
-interface TransferProps {}
+interface TransferProps { }
 
 type SwitchNetworkResult = {
   chainId: number
@@ -43,6 +42,7 @@ const Transfer = () => {
   const [nonce, setNonce] = useState<number>(0)
   const [isSending, setIsSending] = useState<boolean>(false)
   const [pendingTxs, setPendingTxs] = useState<PendingTransaction[]>([])
+  const { visible, setVisible, bindings } = useModal()
 
   const {
     register,
@@ -81,6 +81,19 @@ const Transfer = () => {
       }))
     }
   }, [chainId])
+
+  if (!isConnected) {
+    return (
+      <div className='w-96 mx-auto rounded-lg border shadow-lg p-4'>
+        <div className='font-bold'>此 DApp 支持发送交易的时候指定 nonce。</div>
+        <Spacer />
+        <div>目前支持 ImToken 和 MetaMask</div>
+        <Spacer />
+        <div>在 ImToken 钱包内【浏览】标签页中打开本站地址进行使用</div>
+        <div>或者在安装了 MetaMask 插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。</div>
+      </div>
+    )
+  }
 
   const subscribeTranscationMinedEvent = (txhash: string, amount: string) => {
     library?.once(txhash, t => {
@@ -233,6 +246,24 @@ const Transfer = () => {
     }
   }
 
+  const addNetworkManually: SubmitHandler<NewNetworkPayload> = (payload) => {
+    const chainInfo = payloadToChainInfo(payload)
+    return (window as any).ethereum
+      .request({
+        method: 'wallet_addEthereumChain',
+        params: [chainInfo],
+      })
+      .then((ret: any) => {
+        setVisible(false)
+        toast.success(`Add network ${payload.name} successfully`)
+        return ret
+      })
+      .catch((error: any) => {
+        toast.error(error.message)
+        throw error
+      })
+  }
+
   const switchNetwork = (e: React.ChangeEvent<HTMLInputElement>) => {
     const chainId = e.target.value
     return (window as any).ethereum
@@ -248,38 +279,31 @@ const Transfer = () => {
         toast.success('Switch network successfully')
       })
       .catch((error: any) => {
-        if (typeof error.message === 'string' && error.message.match(/Unrecognized chain/i)) {
-          toast.error(
-            t => (
-              <span>
-                Unrecognized network. Try adding the network first.
-                <button
-                  className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
-                  onClick={requestAddNetwork(chainId)}
-                >
-                  Add network
-                </button>
-              </span>
-            ),
-            {
-              duration: 2000,
-            },
-          )
+        if (typeof error.message === 'string') {
+          if (error.message.match(/Unrecognized chain/i)) {
+            toast.error(
+              t => (
+                <span>
+                  Unrecognized network. Try adding the network first.
+                  <button
+                    className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
+                    onClick={requestAddNetwork(chainId)}
+                  >
+                    Add network
+                  </button>
+                </span>
+              ),
+              {
+                duration: 2000,
+              },
+            )
+          } else if (error.message.match(/user (rejected|denied)/i)) {
+            toast.error("User rejected operation.")
+          }
+        } else {
+          toast.error("Switch network failed with unknown error")
         }
       })
-  }
-
-  if (!isConnected) {
-    return (
-      <div className='w-96 mx-auto rounded-lg border shadow-lg p-4'>
-        <div className='font-bold'>此 DApp 支持发送交易的时候指定 nonce。</div>
-        <Spacer />
-        <div>目前支持 ImToken 和 MetaMask</div>
-        <Spacer />
-        <div>在 ImToken 钱包内【浏览】标签页中打开本站地址进行使用</div>
-        <div>或者在安装了 MetaMask 插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。</div>
-      </div>
-    )
   }
 
   return (
@@ -291,7 +315,7 @@ const Transfer = () => {
             <label htmlFor='network'>Network</label>
             <div
               className='font-normal text-sm cursor-pointer hover:text-blue-600'
-              onClick={() => toast('here we are')}
+              onClick={() => setVisible(true)}
             >
               Add network
             </div>
@@ -386,6 +410,11 @@ const Transfer = () => {
         ))}
       </div>
       <Toaster />
+      <Modal {...bindings}>
+        <Modal.Content>
+          <NewNetworkForm onCancel={() => setVisible(false)} onSubmit={addNetworkManually} />
+        </Modal.Content>
+      </Modal>
     </div>
   )
 }

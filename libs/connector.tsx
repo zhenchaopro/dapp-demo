@@ -7,15 +7,7 @@ import { formatBalance, formatEthAddress } from '../utils'
 import { BigNumber } from 'ethers'
 import { disconnect } from 'process'
 
-const injected = new InjectedConnector({
-  supportedChainIds: [
-    1, // Mainet
-    3, // Ropsten
-    4, // Rinkeby
-    5, // Goerli
-    42, // Kovan
-  ],
-})
+const injected = new InjectedConnector()
 
 const BIG_NUBMER_ZERO = BigNumber.from(0)
 
