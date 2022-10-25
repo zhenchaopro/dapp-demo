@@ -8,7 +8,7 @@ import { Text, Spacer, Badge, useModal, Modal } from '@geist-ui/react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import TransactionSummary from './transation-summary'
 import { BUILTIN_NETWORKS, Network, PendingTransaction } from '../constants'
-import { formatEthAddress } from '../utils'
+import { formatBalance, formatEthAddress } from '../utils'
 import NewNetworkForm, { NewNetworkPayload, payloadToChainInfo } from './new-network-form'
 import { useLocalStorageState } from '../hooks'
 
@@ -25,7 +25,7 @@ export interface FeeData {
   gasPrice: BigNumber
 }
 
-interface TransferProps {}
+interface TransferProps { }
 
 type SwitchNetworkResult = {
   chainId: number
@@ -109,13 +109,15 @@ const Transfer = () => {
   const subscribeTranscationMinedEvent = (txhash: string, amount: string) => {
     library?.once(txhash, t => {
       toast.success(`Transaction ${formatEthAddress(txhash)} has been mined`)
-      setBalance(b => b.sub(ethers.utils.parseEther(amount)))
 
       // 使用 nonce++ 会有问题, 需要重新获取
       // 1. 如果多个客户端同时发送交易，会有问题
       // 2. 如果之前有设置较大的 nonce, 后面设置较小的 nonce
+      // setNonce(n => n+1)
       const signer = library.getSigner()
       signer.getTransactionCount().then(count => setNonce(_ => count))
+      // 同理，多个钱包同时操作会有问题，使用 getBalance 获取最新值
+      signer.getBalance().then(b => setBalance(_ => b))
 
       // remove mined transaction from pending transactions
       setPendingTxs(txs => {
@@ -375,6 +377,7 @@ const Transfer = () => {
         <div className='form-item'>
           <div className='form-item__label'>
             <label htmlFor='amount'>Amount</label>
+            <div className="text-sm font-normal">Balance: {formatBalance(balance)}</div>
           </div>
           <input
             id='amount'

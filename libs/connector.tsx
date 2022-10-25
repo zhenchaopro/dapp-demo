@@ -4,12 +4,11 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { useWeb3React } from '@web3-react/core'
 import { Web3Provider } from '@ethersproject/providers'
 import toast, { Toaster } from 'react-hot-toast'
-import { BigNumber } from 'ethers'
 
 const injected = new InjectedConnector({})
 
 const Connector: React.FC<unknown> = () => {
-  const { activate, active, account, library, deactivate } = useWeb3React<Web3Provider>()
+  const { activate, active, account, deactivate } = useWeb3React<Web3Provider>()
   const [isConnected, setIsConncted] = useState<boolean>(false)
 
   useEffect(() => {
@@ -41,7 +40,7 @@ const Connector: React.FC<unknown> = () => {
       <Toaster />
       {isConnected ? (
         <div className='flex items-center'>
-          <Snippet type='success' style={{ margin: '0 12px' }} symbol='♦' >
+          <Snippet type='success' key={account} style={{ margin: '0 12px' }} symbol='♦' >
             <span>{account.slice(0, 4)}</span>
             <span className='hidden'>{account.slice(4, -4)}</span>
             <span className='inline-flex mx-2'>
