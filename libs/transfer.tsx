@@ -76,7 +76,6 @@ const Transfer = () => {
   }, [nonce])
 
   useEffect(() => {
-    console.log("active change")
     if (!active) {
       // reset address and amount when account is disconnected
       reset(formValues => ({
