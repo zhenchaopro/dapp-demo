@@ -6,7 +6,6 @@ import { BigNumber, ethers } from 'ethers'
 import toast, { Toaster } from 'react-hot-toast'
 import { Text, Spacer, Badge } from '@geist-ui/react'
 import { useForm, SubmitHandler } from 'react-hook-form'
-import { formatEther } from 'ethers/lib/utils'
 import TransactionSummary from './transation-summary'
 import { BUILTIN_NETWORKS, PendingTransaction } from '../constants'
 import { formatEthAddress } from '../utils'
@@ -26,7 +25,7 @@ export interface FeeData {
   gasPrice: BigNumber
 }
 
-interface TransferProps {}
+interface TransferProps { }
 
 type SwitchNetworkResult = {
   chainId: number
@@ -39,7 +38,7 @@ const ADDRESS_FORMAT_ERROR_MSG =
 
 const Transfer = () => {
   const { active, account, library, chainId } = useWeb3React<Web3Provider>()
-  const isConnected = useMemo(() => active && account, [account, active])
+  const isConnected = useMemo(() => active && !!account, [account, active])
   const [balance, setBalance] = useState<BigNumber>(BIGNUMBER_ZERO)
   const [nonce, setNonce] = useState<number>(0)
   const [isSending, setIsSending] = useState<boolean>(false)
@@ -73,6 +72,15 @@ const Transfer = () => {
       nonce: nonce.toString(),
     }))
   }, [nonce])
+
+  useEffect(() => {
+    if (chainId) {
+      reset(formValues => ({
+        ...formValues,
+        network: chainId.toString(),
+      }))
+    }
+  }, [chainId])
 
   const subscribeTranscationMinedEvent = (txhash: string, amount: string) => {
     library?.once(txhash, t => {
@@ -187,8 +195,7 @@ const Transfer = () => {
           setIsSending(false)
           console.log(error)
           if (
-            (typeof error.message === 'string' &&
-              error.message.match(/user (rejected|denied)/i)) ||
+            (typeof error.message === 'string' && error.message.match(/user (rejected|denied)/i)) ||
             (typeof error === 'string' && error.match(/user (rejected|denied)/i))
           ) {
             toast.error('User rejected transaction!')
@@ -196,6 +203,32 @@ const Transfer = () => {
             toast.error('Send failed!')
           }
           throw error
+        })
+    }
+  }
+
+  const requestAddNetwork = (chainId: string) => { 
+    return () => {
+      const chainInfo = BUILTIN_NETWORKS.find((n) => n.chainId.toString() === chainId)
+      return (window as any).ethereum
+        .request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              ...chainInfo,
+              chainId: `0x${Number(chainId).toString(16)}`,
+            },
+          ],
+        })
+        .then((ret: any) => {
+          toast.success(`Add network ${chainInfo?.chainName} successfully`)
+        })
+        .catch((error: any) => {
+          toast.error(error.message, {
+            style: {
+              wordBreak: 'break-word',
+            },
+          })
         })
     }
   }
@@ -220,26 +253,37 @@ const Transfer = () => {
             t => (
               <span>
                 Unrecognized network. Try adding the network first.
-                <button className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'>
+                <button className='border rounded-lg px-3 py-1 bg-blue-500 text-white ml-2'
+                onClick={requestAddNetwork(chainId)}
+                >
                   Add network
                 </button>
               </span>
             ),
             {
-              style: {
-                minWidth: 580,
-              },
+              duration: 2000,
             },
           )
         }
       })
   }
 
-  const requestAddNetwork = (chainId: string) => {}
+  if (!isConnected) {
+    return (
+      <div className='w-96 mx-auto rounded-lg border shadow-lg p-4'>
+        <div className='font-bold'>此 DApp 支持发送交易的时候指定 nonce。</div>
+        <Spacer />
+        <div>目前支持 ImToken 和 MetaMask</div>
+        <Spacer />
+        <div>在 ImToken 钱包内【浏览】标签页中打开本站地址进行使用</div>
+        <div>或者在安装了 MetaMask 插件的浏览器中打开本站。MetaMask 会忽略用户指定的 nonce。</div>
+      </div>
+    )
+  }
 
   return (
     <div className='transfer-container w-96 mx-auto border rounded-lg p-4 shadow-lg'>
-    <Text h2>Send</Text>
+      <Text h2>Send</Text>
       <form onSubmit={handleSubmit(sendTransaction)}>
         <div className='form-item'>
           <div className='form-item__label'>
@@ -255,7 +299,7 @@ const Transfer = () => {
             id='network'
             placeholder='Select network'
             {...register('network', {
-              required: 'Network is required', 
+              required: 'Network is required',
               onChange: switchNetwork,
             })}
           >

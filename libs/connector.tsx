@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import { Web3Provider } from '@ethersproject/providers'
 import { formatBalance, formatEthAddress } from '../utils'
 import { BigNumber } from 'ethers'
+import { disconnect } from 'process'
 
 const injected = new InjectedConnector({
   supportedChainIds: [
@@ -19,7 +20,7 @@ const injected = new InjectedConnector({
 const BIG_NUBMER_ZERO = BigNumber.from(0)
 
 const Connector: React.FC<unknown> = () => {
-  const { activate, active, account, library } = useWeb3React<Web3Provider>()
+  const { activate, active, account, library, deactivate } = useWeb3React<Web3Provider>()
   const [isConnected, setIsConncted] = useState<boolean>(false)
   const [balance, setBalance] = useState<BigNumber>(BIG_NUBMER_ZERO)
 
@@ -33,7 +34,7 @@ const Connector: React.FC<unknown> = () => {
     }
   }, [account, library])
 
-  const clickHandler = async () => {
+  const connectWallet = async () => {
     try {
       if (active) return alert('Already linked')
       await activate(injected, walletError => {
@@ -48,20 +49,23 @@ const Connector: React.FC<unknown> = () => {
     }
   }
 
-  console.log(account);
+  const disconnect = () => {
+    setIsConncted(false);
+    deactivate()
+  }
 
   return (
     <div className='header flex items-center'>
       {isConnected ? (
         <div className='flex items-center'>
           <div className='balance'>{formatBalance(balance)}</div>
-          <Snippet type="success" marginRight={1} marginLeft={1} symbol="♦">{formatEthAddress(account)}</Snippet>
-          <Button auto onClick={clickHandler}>
+          <Snippet type="success" style={{ margin: '0 12px' }} symbol="♦">{formatEthAddress(account)}</Snippet>
+          <Button auto onClick={disconnect}>
             Disconnect
           </Button>
         </div>
       ) : (
-        <Button type="secondary-light" auto onClick={clickHandler}>
+        <Button type="secondary-light" auto onClick={connectWallet}>
           Connect wallet
         </Button>
       )}
