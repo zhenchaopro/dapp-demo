@@ -17,7 +17,7 @@ const Application: NextPage<AppProps<unknown>> = ({ Component, pageProps }) => {
     <>
       <Head>
         <title>DApp - Send transaction with specifed nonce.</title>
-        <link rel="icon" type="image/png" href="/images/favicon.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/dapp-demo/images/favicon.png" sizes="32x32" />
         <meta name="google" content="notranslate" />
         <meta name="referrer" content="strict-origin" />
         <meta
