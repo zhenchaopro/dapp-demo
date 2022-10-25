@@ -76,6 +76,18 @@ const Transfer = () => {
   }, [nonce])
 
   useEffect(() => {
+    console.log("active change")
+    if (!active) {
+      // reset address and amount when account is disconnected
+      reset(formValues => ({
+        ...formValues,
+        to: "",
+        amount: ""
+      }))
+    }
+  }, [active])
+
+  useEffect(() => {
     if (chainId) {
       reset(formValues => ({
         ...formValues,
@@ -189,12 +201,12 @@ const Transfer = () => {
             }
           })
           subscribeTranscationMinedEvent(txhash, payload.amount)
-          toast.success("Transaction sent.")
+          toast.success('Transaction sent.')
         })
         .catch((error: any) => {
           setIsSending(false)
           console.log(error)
-          toast.error("Failed to send transaction!")
+          toast.error('Failed to send transaction!')
           throw error
         })
     } else {
@@ -281,7 +293,7 @@ const Transfer = () => {
         return ret
       })
       .catch((error: any) => {
-        toast.error(error.message || "Faild to add network!")
+        toast.error(error.message || 'Faild to add network!')
         throw error
       })
   }
@@ -377,7 +389,7 @@ const Transfer = () => {
         <div className='form-item'>
           <div className='form-item__label'>
             <label htmlFor='amount'>Amount</label>
-            <div className="text-sm font-normal">Balance: {formatBalance(balance)}</div>
+            <div className='text-sm font-normal'>Balance: {formatBalance(balance)}</div>
           </div>
           <input
             id='amount'
