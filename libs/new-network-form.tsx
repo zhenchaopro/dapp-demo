@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 export type NewNetworkPayload = {
   name: string
   rpcUrl: string
-  chainId: number
+  chainId: string,
   currencySymbol: string
   currencyDecimals: string
   blockExploreUrl?: string
@@ -23,7 +23,7 @@ const CURRENCY_SYMBOL_MESSAGE =
 
 export const payloadToChainInfo = (payload: NewNetworkPayload): ChainInfo => {
   return {
-    chainId: numberToChainID(payload.chainId),
+    chainId: numberToChainID(parseInt(payload.chainId)),
     chainName: payload.name,
     nativeCurrency: {
       symbol: payload.currencySymbol,
